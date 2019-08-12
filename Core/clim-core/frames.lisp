@@ -197,7 +197,8 @@ documentation produced by presentations.")
 
 (defmethod frame-geometry* ((frame standard-application-frame))
   "-> width height &optional top left"
-  (let ((pane (frame-top-level-sheet frame)))
+  (let* ((pane (frame-top-level-sheet frame))
+         (graft (graft pane)))
     ;(destructuring-bind (&key left top right bottom width height) (frame-geometry frame)
     (with-slots (geometry-left geometry-top geometry-right
                                geometry-bottom geometry-width
@@ -205,11 +206,17 @@ documentation produced by presentations.")
       ;; Find width and height from looking at the respective options
       ;; first, then at left/right and top/bottom and finally at what
       ;; compose-space says.
-      (let* ((width (or geometry-width
+      (let* ((width (or (when geometry-width
+                          (case geometry-width
+                            (:max (graft-width graft))
+                            (t geometry-width)))
                         (and geometry-left geometry-right
                              (- geometry-right geometry-left))
                         (space-requirement-width (compose-space pane))))
-             (height (or geometry-height
+             (height (or (when geometry-height
+                          (case geometry-height
+                            (:max (graft-height graft))
+                            (t geometry-height)))
                          (and geometry-top geometry-bottom (- geometry-bottom geometry-top))
                          (space-requirement-height (compose-space pane))))
              ;; See if a position is wanted and return left, top.
